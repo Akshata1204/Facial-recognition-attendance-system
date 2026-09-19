@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Attendance - Facial Recognition</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Lavender Aesthetic Style -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #e8d9ff, #f8efff);
+            font-family: "Poppins", sans-serif;
+        }
+
+        .navbar {
+            background: #8e44ad !important;
+        }
+
+        .navbar-brand, .nav-link {
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            color: #f3e8ff !important;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+        }
+
+        h4, h5 {
+            color: #6a1b9a;
+            font-weight: 700;
+        }
+
+        label {
+            color: #6a1b9a;
+        }
+
+        .btn-success {
+            background-color: #9b5de5;
+            border-color: #9b5de5;
+            font-weight: 600;
+            border-radius: 30px;
+        }
+
+        .btn-success:hover {
+            background-color: #7c3aed;
+            border-color: #7c3aed;
+        }
+
+        .card-header {
+            border-bottom: none;
+            background: transparent;
+        }
+
+        #currentTime {
+            background-color: #9b5de5 !important;
+        }
+
+        img {
+            border-radius: 15px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+            🌸 AI&DS Attendance
+        </a>
+        <div class="navbar-nav">
+            <a class="nav-link active" href="{{ url_for('attendance') }}">Attendance</a>
+            <a class="nav-link" href="{{ url_for('history') }}">History</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-3">
+                {% for category, msg in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ msg }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Layout -->
+    <div class="row g-4">
+
+        <!-- Live Camera Feed -->
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h4 class="mb-0">📷 Live Camera Feed</h4>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('video_feed') }}" class="img-fluid border" alt="Video Feed">
+                    <p class="mt-2 text-muted small">
+                        Detected faces will be highlighted. If you see <strong>Unknown</strong>, you can register below.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section -->
+        <div class="col-lg-4">
+
+            <!-- Register New User -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📝 Register New User</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        When the camera shows your face as <strong>Unknown</strong>, enter your name here.
+                    </p>
+
+                    <form method="POST" action="{{ url_for('register') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            Register
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Last Mark Status -->
+            <div class="card shadow-lg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📌 Status</h5>
+                    <span class="badge" id="currentTime"></span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1 fw-semibold text-dark"><strong>Last Marked:</strong></p>
+                    <p id="lastMarked" class="text-muted small mb-0">No attendance recorded yet.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Time & Last Mark Script -->
+<script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').innerText = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    async function fetchLastMark() {
+        try {
+            const res = await fetch("{{ url_for('last_mark_api') }}");
+            const data = await res.json();
+            const el = document.getElementById('lastMarked');
+
+            if (data.status === "ok") {
+                el.textContent = data.name + " at " + data.timestamp;
+            } else {
+                el.textContent = "No attendance recorded yet.";
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    setInterval(fetchLastMark, 5000);
+    fetchLastMark();
+</script>
+
+</body>
+</html>

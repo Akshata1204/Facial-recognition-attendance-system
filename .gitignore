@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+dataset/
+attendance_photos/
+attendance.csv
+encodings.pickle
